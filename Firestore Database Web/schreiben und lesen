@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Firestore Demo</title>
+</head>
+
+<body>
+    <h1>Firestore Demo</h1>
+
+    <input id="name" placeholder="Name" />
+    <input id="message" placeholder="Nachricht" />
+    <button id="saveBtn">Speichern</button>
+
+    <h2>Gespeicherte Einträge</h2>
+    <button id="loadBtn">Neu laden</button>
+    <ul id="list"></ul>
+
+    <script type="module">
+        // 1) Firebase SDK (Web) importieren (v9+ modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            orderBy,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 2) Deine Firebase-Konfiguration (ersetzen!)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYaQnYo3umVW2zWI0XKh_p_8ynEfaUsf0",
+            authDomain: "esp-nachricht.firebaseapp.com",
+            projectId: "esp-nachricht",
+            storageBucket: "esp-nachricht.firebasestorage.app",
+            messagingSenderId: "166833943486",
+            appId: "1:166833943486:web:179c02f4094d8d2606ffef",
+            measurementId: "G-6GFQME78DW"
+        };
+
+        // 3) Firebase initialisieren
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const nameEl = document.getElementById("name");
+        const msgEl = document.getElementById("message");
+        const listEl = document.getElementById("list");
+
+        async function saveData() {
+            const name = nameEl.value.trim();
+            const message = msgEl.value.trim();
+            if (!name || !message) {
+                alert("Bitte Name und Nachricht eingeben.");
+                return;
+            }
+
+            // 4) Speichern: neues Dokument in Collection "messages"
+            await addDoc(collection(db, "messages"), {
+                name,
+                message,
+                createdAt: serverTimestamp()
+            });
+
+            nameEl.value = "";
+            msgEl.value = "";
+            await loadData();
+        }
+
+        async function loadData() {
+            listEl.innerHTML = "";
+
+            // 5) Lesen: alle Dokumente aus "messages" holen (sortiert)
+            const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const li = document.createElement("li");
+                li.textContent = `${data.name}: ${data.message}`;
+                listEl.appendChild(li);
+            });
+        }
+
+        document.getElementById("saveBtn").addEventListener("click", saveData);
+        document.getElementById("loadBtn").addEventListener("click", loadData);
+
+        // Initial laden
+        loadData();
+    </script>
+</body>
+
+</html>
