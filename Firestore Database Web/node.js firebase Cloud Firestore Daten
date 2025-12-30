@@ -1,0 +1,58 @@
+npm init -y
+npm i firebase-admin
+------------------------
+b) Service Account Key besorgen
+
+In der Firebase Console:
+Projekt → Einstellungen (Zahnrad) → Dienstkonten → Neues privates Schlüsselpaar generieren
+Die JSON-Datei z.B. als serviceAccountKey.json in den Ordner legen.
+
+Wichtig: Diese Datei nicht ins Git einchecken.
+
+------------------------
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceAccountKey.json");
+
+// Firebase Admin initialisieren
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+
+async function run() {
+    try {
+        // ====== WRITE: Dokument speichern ======
+        const docRef = db.collection("users").doc("user_1");
+
+        await docRef.set({
+            name: "Max",
+            age: 25,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        console.log("✅ Gespeichert: users/user_1");
+
+        // ====== READ: Dokument lesen ======
+        const snapshot = await docRef.get();
+
+        if (!snapshot.exists) {
+            console.log("❌ Dokument existiert nicht");
+            return;
+        }
+
+        console.log("📄 Gelesen:", snapshot.id, snapshot.data());
+
+        // ====== OPTIONAL: weitere Dokumente abfragen ======
+        const querySnap = await db.collection("users").where("age", ">=", 18).get();
+        console.log(`\n🔎 Query: users (age >= 18) → ${querySnap.size} Treffer`);
+
+        querySnap.forEach((doc) => {
+            console.log("-", doc.id, doc.data());
+        });
+    } catch (err) {
+        console.error("🔥 Fehler:", err);
+    }
+}
+
+run();
