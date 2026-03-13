@@ -1,0 +1,147 @@
+
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs } from "firebase/firestore";
+import { onSnapshot, query, where } from "firebase/firestore";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBQerid6vLJ8E2ChX7fZ57pXWLJEi6gh5s",
+    authDomain: "esp32-verwaltung.firebaseapp.com",
+    projectId: "esp32-verwaltung",
+    storageBucket: "esp32-verwaltung.firebasestorage.app",
+    messagingSenderId: "294023320610",
+    appId: "1:294023320610:web:306a494e3f5ec8aa70e67b",
+    measurementId: "G-V48Q4XEB1D"
+};
+
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+
+
+
+
+export async function speichen() {
+    console.log("speichen");
+    try {
+        const docRef = await addDoc(collection(db, "users"), {
+            name: "Thomas",
+            alter: 30,
+            stadt: "Berlin",
+            erstelltAm: new Date()
+        });
+
+        console.log("Dokument gespeichert mit ID:", docRef.id);
+    } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+    }
+}
+
+
+async function speichernInUnterSammlung() {
+    await setDoc(doc(db, "users", "meinDokument", "MeldungListe", "eintrag"), {
+        titel: "Test",
+        status: "false",
+        alter: 56
+    });
+}
+
+export async function speichenMitId() {
+    try {
+        await setDoc(doc(db, "users", "2425"), {
+            name: "Thomas",
+            alter: 30,
+            stadt: "Berlin"
+        });
+
+        console.log("Dokument mit eigener ID gespeichert");
+    } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+    }
+}
+
+
+
+async function lesen() {
+    const docRef = doc(db, "users", "2425");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        console.table(Object.keys(docSnap.data()));//Alle Feld namen
+
+        console.log("Daten:", docSnap.data());
+        console.log("Name:", docSnap.data().name);
+    } else {
+        console.log("Dokument nicht gefunden");
+    }
+}
+
+
+//Ganze Collection lesen
+async function leseAlleBenutzer() {
+    const querySnapshot = await getDocs(collection(db, "users"));
+
+    querySnapshot.forEach((doc) => {
+        console.log(doc.id, "=>", doc.data());
+    });
+}
+
+
+
+
+// const unsub = onSnapshot(doc(db, "users", "2425"), (docSnap) => {
+//     if (docSnap.exists()) {
+//         console.log("Live-Daten:", docSnap.data());
+//     } else {
+//         console.log("Dokument nicht gefunden");
+//     }
+// });
+
+
+
+
+async function leseBenutzerAusBerlin() {
+    const q = query(
+        collection(db, "users"),
+        where("stadt", "==", "Berlin")
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((doc) => {
+        console.log(doc.id, "=>", doc.data());
+    });
+}
+
+
+
+
+
+
+export async function test() {
+    console.log("test");
+
+    const data = {
+        "vorname": "Thomas",
+        "nachname": "Herzog",
+        "hobby": ["123", true, false, 2425, "Tischtennis"]
+    }
+
+    try {
+
+        //  await setDoc(doc(db, "users", "meinDokument", "MeldungListe", "eintrag")
+
+        await setDoc(doc(db, "test", "doc", "test", "eintrag"), data);
+
+        // console.log("Dokument gespeichert mit ID:", docRef ?? docRef.id);
+    } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+    }
+}
+
+
+
+test();
+
+
+
+
+
